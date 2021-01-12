@@ -13,7 +13,7 @@ class JsonData
 {
 
 public:
-    JsonData();
+    JsonData(const qint16 &channel);
     ~JsonData();
 
     /// @brief pattern data
@@ -30,6 +30,8 @@ public:
 
 private:
     // void processJson();
+    /// @brief store channel number
+    qint16 ch;
 };
 
 #endif // JSONDATA_H
