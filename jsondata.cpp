@@ -15,7 +15,6 @@ JsonData::JsonData(const qint16 &channel)
 
 JsonData::~JsonData()
 {
-
 }
 
 void JsonData::setData(const QByteArray &data)
