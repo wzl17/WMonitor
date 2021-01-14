@@ -1,9 +1,6 @@
 #ifndef CHARTVIEW_H
 #define CHARTVIEW_H
 
-#include "udpsocket.h"
-#include "jsondata.h"
-
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
 
@@ -21,12 +18,6 @@ public:
 
     QChart *chart;
     QLineSeries *series;
-
-private:
-
-private slots:
-//    /// @brief Update charts whenever udp packages arrive
-//    void onReceiveUDP();
 };
 
 #endif // CHARTVIEW_H

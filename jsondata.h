@@ -1,13 +1,11 @@
 #ifndef JSONDATA_H
 #define JSONDATA_H
 
-#include <QFile>
 #include <QString>
 #include <QJsonArray>
-#include <QtCharts/QLineSeries>
+#include <QList>
+#include <QPointF>
 #include <QByteArray>
-
-QT_CHARTS_USE_NAMESPACE
 
 class JsonData
 {
@@ -29,7 +27,6 @@ public:
     bool isNull(void);
 
 private:
-    // void processJson();
     /// @brief store channel number
     qint16 ch;
 };

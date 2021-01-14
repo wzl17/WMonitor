@@ -1,9 +1,6 @@
 #include "chartview.h"
-#include "udpsocket.h"
 
 #include <QValueAxis>
-#include <QObject>
-#include <QNetworkDatagram>
 #include <QLineSeries>
 
 ChartView::ChartView(QWidget *parent)
@@ -47,17 +44,6 @@ void ChartView::initChart()
     chart->legend()->hide();
 
     this->setChart(chart);
-    this->setRenderHint(QPainter::Antialiasing);
+    //this->setRenderHint(QPainter::Antialiasing);
 }
-
-//void ChartView::onReceiveUDP()
-//{
-//    while (socket->hasPendingDatagrams()) {
-//        json = new JsonData(socket->WM_CHANNEL);
-//        json->setData(socket->receiveDatagram().data());
-//        series->replace(json->pattern);
-//        chart->setTitle(QString("Frequency:%1 THz").arg(json->freq,0,'f',5));
-//        delete json;
-//    }
-//}
 

@@ -1,7 +1,7 @@
 #ifndef UDPSOCKET_H
 #define UDPSOCKET_H
 
-#include "controlbuttons.h"
+#include "udpbuttons.h"
 
 #include <QUdpSocket>
 #include <QGroupBox>
@@ -24,7 +24,7 @@ public:
     void initSocket();
 
     QGroupBox *configBoxGroup;
-    ControlButtons *buttons;
+    UdpButtons *buttons;
     qint16 WM_CHANNEL = 1;
     qint32 UDP_PORT = 9898;
 

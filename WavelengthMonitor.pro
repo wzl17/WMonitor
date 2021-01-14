@@ -10,17 +10,19 @@ CONFIG += c++11
 
 SOURCES += \
     chartview.cpp \
-    controlbuttons.cpp \
     jsondata.cpp \
+    lasercontrol.cpp \
     main.cpp \
     mainwindow.cpp \
+    udpbuttons.cpp \
     udpsocket.cpp
 
 HEADERS += \
     chartview.h \
-    controlbuttons.h \
     jsondata.h \
+    lasercontrol.h \
     mainwindow.h \
+    udpbuttons.h \
     udpsocket.h
 
 FORMS += \
@@ -30,3 +32,8 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+win32: LIBS += -L$$PWD/lib/ -lNIDAQmx
+
+INCLUDEPATH += $$PWD/include
+DEPENDPATH += $$PWD/include
