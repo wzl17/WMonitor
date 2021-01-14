@@ -14,7 +14,7 @@ class JsonData
 
 public:
     JsonData(const qint16 &channel);
-    ~JsonData();
+    virtual ~JsonData();
 
     /// @brief pattern data
     QList<QPointF> pattern;
