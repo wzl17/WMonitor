@@ -2,9 +2,9 @@
 #define MAINWINDOW_H
 
 #include "jsondata.h"
-#include "controlbuttons.h"
 #include "chartview.h"
 #include "udpsocket.h"
+#include "lasercontrol.h"
 
 #include <QtWidgets/QMainWindow>
 #include <QSpinBox>
@@ -36,5 +36,6 @@ private:
     UdpSocket *udpSocket;
     ChartView *chartView;
     JsonData *json;
+    LaserControl *laserControl;
 };
 #endif // MAINWINDOW_H

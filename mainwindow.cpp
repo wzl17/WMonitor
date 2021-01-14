@@ -36,8 +36,10 @@ void MainWindow::initUI()
     udpSocket = new UdpSocket;
     udpSocket->initConfigBox();
     udpSocket->initSocket();
+
     chartView = new ChartView;
     chartView->initChart();
+
     QObject::connect(udpSocket, &QUdpSocket::readyRead,
                      chartView, [=](){
         while (udpSocket->hasPendingDatagrams()) {
@@ -49,10 +51,15 @@ void MainWindow::initUI()
         }
     });
 
+    laserControl = new LaserControl;
+    laserControl->initDevice();
+    laserControl->initControlBox();
+
     mainLayout->addWidget(chartView);
 
     sideLayout = new QVBoxLayout;
     sideLayout->addWidget(udpSocket->configBoxGroup);
+    sideLayout->addWidget(laserControl->controlBoxGroup);
     sideLayout->addStretch(-1);
     sideLayout->addWidget(udpSocket->buttons);
     mainLayout->addLayout(sideLayout);

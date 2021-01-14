@@ -21,7 +21,7 @@ void UdpSocket::initSocket()
     this->bind(UDP_PORT,QUdpSocket::ShareAddress);
     this->open(QIODevice::ReadOnly);
 
-    buttons = new ControlButtons(tr("Control"));
+    buttons = new UdpButtons(tr("UDP Connection"));
     QObject::connect(buttons->startButton, &QPushButton::clicked,
                      this, &UdpSocket::startUDP);
     QObject::connect(buttons->stopButton, &QPushButton::clicked,
