@@ -1,15 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "globals.h"
 #include "jsondata.h"
 #include "chartview.h"
 #include "udpsocket.h"
 #include "lasercontrol.h"
 
 #include <QtWidgets/QMainWindow>
-#include <QSpinBox>
-#include <QHBoxLayout>
-#include <QLineEdit>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,9 +21,16 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    virtual ~MainWindow();
+    ~MainWindow();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 
 private:
+    /// @brief Read Config.ini for parameters setting
+    void readConfig();
+    /// @brief Write current settings to config.ini
+    void writeConfig();
     /// @brief Initiation of UI
     void initUI();
 
@@ -37,5 +42,8 @@ private:
     ChartView *chartView;
     JsonData *json;
     LaserControl *laserControl;
+
+    /// @brief directory of config.ini
+    QString config_dir;
 };
 #endif // MAINWINDOW_H

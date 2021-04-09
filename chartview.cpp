@@ -8,6 +8,7 @@ ChartView::ChartView(QWidget *parent)
     , chart(new QChart)
     , series(new QLineSeries)
 {
+    initChart();
 }
 
 // cause pure virtual function error
@@ -23,9 +24,9 @@ void ChartView::initChart()
 
     // ----------- X Axis -----------
     QValueAxis *axisX = new QValueAxis;
-    axisX->setRange(0, 2048);
+    axisX->setRange(chart_x_min, chart_x_max);
     axisX->setLabelFormat("%g");
-    axisX->setTickCount(5);
+    axisX->setTickCount(chart_x_tick_counts);
     axisX->setTitleText("");
     chart->addAxis(axisX, Qt::AlignBottom);
     series->attachAxis(axisX);
@@ -33,17 +34,19 @@ void ChartView::initChart()
 
     // ----------- Y Axis -----------
     QValueAxis *axisY = new QValueAxis;
-    axisY->setRange(0, 4000);
+    axisY->setRange(chart_y_min, chart_y_max);
     axisY->setLabelFormat("%g");
     axisY->setTitleText("");
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisY);
     delete axisY; // reduce %CPU
 
+    QFont titleFont(title_font_family, title_font_size, QFont::Bold);
+    chart->setTitleFont(titleFont);
     chart->setTitle(QString("Frequency:"));
     chart->legend()->hide();
 
     this->setChart(chart);
-    //this->setRenderHint(QPainter::Antialiasing);
+    //this->setRenderHint(QPainter::Antialiasing); //Disable to reduce %CPU
 }
 

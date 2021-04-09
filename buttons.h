@@ -1,5 +1,5 @@
-#ifndef UDPBUTTONS_H
-#define UDPBUTTONS_H
+#ifndef BUTTONS_H
+#define BUTTONS_H
 
 #include <QGroupBox>
 #include <QPushButton>
@@ -8,13 +8,13 @@ QT_BEGIN_NAMESPACE
 class QGroupBox;
 QT_END_NAMESPACE
 
-class UdpButtons : public QGroupBox
+class Buttons : public QGroupBox
 {
     Q_OBJECT
 
 public:
-    UdpButtons(const QString &title, QWidget *parent = nullptr);
-    virtual ~UdpButtons();
+    Buttons(const QString &title, QWidget *parent = nullptr);
+    virtual ~Buttons();
 
     QPushButton *startButton;
     QPushButton *stopButton;
@@ -23,4 +23,4 @@ private:
     void initButtons();
 };
 
-#endif // UDPBUTTONS_H
+#endif // BUTTONS_H

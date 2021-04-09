@@ -1,6 +1,7 @@
 #ifndef CHARTVIEW_H
 #define CHARTVIEW_H
 
+#include "globals.h"
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
 

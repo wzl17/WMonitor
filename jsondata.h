@@ -1,7 +1,7 @@
 #ifndef JSONDATA_H
 #define JSONDATA_H
 
-#include <QString>
+#include "globals.h"
 #include <QJsonArray>
 #include <QList>
 #include <QPointF>
@@ -11,24 +11,19 @@ class JsonData
 {
 
 public:
-    JsonData(const qint16 &channel);
+    JsonData();
     virtual ~JsonData();
 
-    /// @brief pattern data
-    QList<QPointF> pattern;
-    /// @brief frequency value read from channel 7
-    qreal freq;
-    // TODO:
-    // make freq a list
+    /// @brief wavemeter pattern data
+    QList<QPointF> wm_pattern;
+    /// @brief frequency value read from wavemeter channel
+    qreal wm_freq;
 
     /// @brief json string data input
-    void setData(const QByteArray &data);
-    /// @brief whether data is loaded or not
-    bool isNull(void);
+    void loadWavemeterData(const QByteArray &data);
 
 private:
-    /// @brief store channel number
-    qint16 ch;
+    qint8 m_ch;
 };
 
 #endif // JSONDATA_H

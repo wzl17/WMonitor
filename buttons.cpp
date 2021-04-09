@@ -1,20 +1,20 @@
-#include "udpbuttons.h"
+#include "buttons.h"
 
 #include <QGridLayout>
 
-UdpButtons::UdpButtons(const QString &title, QWidget *parent)
+Buttons::Buttons(const QString &title, QWidget *parent)
     : QGroupBox(title,parent)
 {
     initButtons();
 }
 
-UdpButtons::~UdpButtons()
+Buttons::~Buttons()
 {
     delete startButton;
     delete stopButton;
 }
 
-void UdpButtons::initButtons()
+void Buttons::initButtons()
 {
     startButton = new QPushButton(tr("Start"));
     stopButton = new QPushButton(tr("Stop"));

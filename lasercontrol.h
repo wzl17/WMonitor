@@ -1,14 +1,10 @@
 #ifndef LASERCONTROL_H
 #define LASERCONTROL_H
 
+#include "globals.h"
 #include <stdio.h>
 #include <NIDAQmx.h>
-#include <QWidget>
-#include <QGroupBox>
-#include <QLabel>
-#include <QLineEdit>
-#include <QGridLayout>
-#include <QDoubleSpinBox>
+
 
 class LaserControl : public QWidget
 {
@@ -23,8 +19,7 @@ public:
     /// @brief Initiation of control box
     void initControlBox();
 
-    QGroupBox *controlBoxGroup;
-    QString device = "Dev1/ao0";
+    QGroupBox *groupWidget;
 
 private:
     /// @brief Stop analog output task
