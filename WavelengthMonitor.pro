@@ -9,20 +9,22 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    buttons.cpp \
     chartview.cpp \
+    globals.cpp \
     jsondata.cpp \
     lasercontrol.cpp \
     main.cpp \
     mainwindow.cpp \
-    udpbuttons.cpp \
     udpsocket.cpp
 
 HEADERS += \
+    buttons.h \
     chartview.h \
+    globals.h \
     jsondata.h \
     lasercontrol.h \
     mainwindow.h \
-    udpbuttons.h \
     udpsocket.h
 
 FORMS += \
@@ -37,3 +39,5 @@ win32: LIBS += -L$$PWD/lib/ -lNIDAQmx
 
 INCLUDEPATH += $$PWD/include
 DEPENDPATH += $$PWD/include
+
+RESOURCES +=
