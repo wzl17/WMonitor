@@ -19,6 +19,10 @@ public:
 
     QChart *chart;
     QLineSeries *series;
+
+signals:
+    void freqChanged(double freq);
+
 };
 
 #endif // CHARTVIEW_H

@@ -1,6 +1,6 @@
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets charts core network
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets charts core network serialport
 
 CONFIG += c++11
 
@@ -16,6 +16,7 @@ SOURCES += \
     lasercontrol.cpp \
     main.cpp \
     mainwindow.cpp \
+    shutters.cpp \
     udpsocket.cpp
 
 HEADERS += \
@@ -25,6 +26,7 @@ HEADERS += \
     jsondata.h \
     lasercontrol.h \
     mainwindow.h \
+    shutters.h \
     udpsocket.h
 
 FORMS += \

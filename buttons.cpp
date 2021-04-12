@@ -1,7 +1,5 @@
 #include "buttons.h"
 
-#include <QGridLayout>
-
 Buttons::Buttons(const QString &title, QWidget *parent)
     : QGroupBox(title,parent)
 {

@@ -6,6 +6,7 @@
 #include "chartview.h"
 #include "udpsocket.h"
 #include "lasercontrol.h"
+#include "shutters.h"
 
 #include <QtWidgets/QMainWindow>
 
@@ -42,8 +43,14 @@ private:
     ChartView *chartView;
     JsonData *json;
     LaserControl *laserControl;
+    Shutters *servo1;
+    Shutters *servo2;
+    Shutters *servo3;
 
     /// @brief directory of config.ini
     QString config_dir;
+
+public slots:
+    void statusShow(const QString &s);
 };
 #endif // MAINWINDOW_H

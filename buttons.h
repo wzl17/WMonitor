@@ -1,7 +1,7 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
-#include <QGroupBox>
+#include "globals.h"
 #include <QPushButton>
 
 QT_BEGIN_NAMESPACE
