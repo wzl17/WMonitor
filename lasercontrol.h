@@ -43,8 +43,8 @@ private:
     QLabel *merrLabel;
     QLineEdit *merrInput;
 
-    QLabel *regLabel;
-    QCheckBox *regStatus;
+    QPushButton *regStatus;
+    QCheckBox *regSwitch;
     QLabel *shutterLabel;
     StartStopButtons *shutterButtons;
 

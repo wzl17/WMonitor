@@ -82,6 +82,6 @@ void Shutters::shutterScanOFF() {
 }
 
 void Shutters::readStatus() {
-    QByteArray buf = serial->readLine();
+    QByteArray buf = serial->readAll();
     emit error(buf);
 }

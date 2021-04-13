@@ -58,9 +58,10 @@ void LaserControl::initControlBox()
     QObject::connect(merrInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeMaxErr);
 
-    regLabel = new QLabel(tr("regulation:"));
-    regStatus = new QCheckBox(tr("Locked"));
-    regStatus->setChecked(false);
+    regStatus = new QPushButton(tr("Lock State"));
+    regStatus->setStyleSheet("QPushButton {background-color: white}");
+    regSwitch = new QCheckBox(tr("Regulation"));
+    regSwitch->setChecked(false);
     feedback_counter = 0;
     err_sum = 0;
 
@@ -70,7 +71,7 @@ void LaserControl::initControlBox()
     controlBoxGrid->addRow(merrLabel, merrInput);
     controlBoxGrid->addRow(pLabel, pInput);
     controlBoxGrid->addRow(iLabel, iInput);
-    controlBoxGrid->addRow(regLabel, regStatus);
+    controlBoxGrid->addRow(regSwitch, regStatus);
     groupWidget->setLayout(controlBoxGrid);
 }
 
@@ -131,30 +132,35 @@ void LaserControl::changeMaxErr()
 
 void LaserControl::voltFeedback(const qreal &freq)
 {
-    if (!regStatus->isChecked()) {
-        feedback_counter = 0;
-        err_sum = 0.0;
-        offset = ptr->value;
-        return;
-    }
-    if (freq <=0) { // invalid wavelength
-        regStatus->setChecked(false);
-        return;
-    }
     qreal f_err = freq - ptr->setpoint;
-    // for error over maximum error, unchecked lock state and return
-    if (f_err >= ptr->maxerr) {
-        regStatus->setChecked(false);
+    if (!regSwitch->isChecked()) { // Regulation off
         return;
     }
-    feedback_counter++;
-    err_sum += f_err;
-    // only do the feedback when the error is stable for given time
-    if (feedback_counter >= ptr->fb_pending) {
-        voltageInput->setValue( offset + qBound(ptr->fb_min,
-                                      err_sum * ptr->i + f_err*ptr->p,
-                                      ptr->fb_max) );
+    else {
+        if (abs(f_err) >= 1) { // Regulation on but invalid wavelength
+            regSwitch->setChecked(false); //switch off regulation
+            regStatus->setStyleSheet("QPushButton {background-color: white}");
+            regStatus->update();
+            return;
+        }
+        else if (abs(f_err) < ptr->maxerr) { //counts valid error data
+            feedback_counter++;
+            err_sum += f_err;
+            regStatus->setStyleSheet("QPushButton {background-color: green}");
+            regStatus->update();
+        }
+        else { //not locked, change lock state and clear counts
+            regStatus->setStyleSheet("QPushButton {background-color: white}");
+            regStatus->update();
+            feedback_counter = 0;
+            err_sum = 0.0;
+        }
+        // only do the feedback when the error is stable for given time
+        if (feedback_counter >= ptr->fb_pending) {
+            voltageInput->setValue( offset + qBound(ptr->fb_min,
+                                    err_sum * ptr->i + f_err*ptr->p,
+                                    ptr->fb_max) );
+        }
     }
-    //emit feedbackDone();
     return;
 }
