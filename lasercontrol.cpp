@@ -13,6 +13,18 @@ LaserControl::~LaserControl()
     stopDevice();
     delete voltageLabel;
     delete voltageInput;
+    delete pLabel;
+    delete pInput;
+    delete iLabel;
+    delete iInput;
+    delete setpLabel;
+    delete setpInput;
+    delete merrLabel;
+    delete merrInput;
+    delete regStatus;
+    delete regSwitch;
+    delete shutterLabel;
+    delete shutterButtons;
     delete controlBoxGrid;
     delete groupWidget;
 }
@@ -137,13 +149,7 @@ void LaserControl::voltFeedback(const qreal &freq)
         return;
     }
     else {
-        if (abs(f_err) >= 1) { // Regulation on but invalid wavelength
-            regSwitch->setChecked(false); //switch off regulation
-            regStatus->setStyleSheet("QPushButton {background-color: white}");
-            regStatus->update();
-            return;
-        }
-        else if (abs(f_err) < ptr->maxerr) { //counts valid error data
+        if (abs(f_err) < ptr->maxerr) { //counts valid error data
             feedback_counter++;
             err_sum += f_err;
             offset = ptr->value;
