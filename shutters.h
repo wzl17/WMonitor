@@ -30,7 +30,7 @@ signals:
 
 private:
     void initShutter();
-
+    QSerialPort *serial;
     QString m_channel;
     QString m_on;
     QString m_off;
@@ -45,6 +45,7 @@ private slots:
     void shutterOFF();
     void shutterScanON();
     void shutterScanOFF();
+    void readStatus();
 };
 
 #endif // SHUTTERS_H
