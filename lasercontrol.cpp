@@ -146,6 +146,7 @@ void LaserControl::voltFeedback(const qreal &freq)
         else if (abs(f_err) < ptr->maxerr) { //counts valid error data
             feedback_counter++;
             err_sum += f_err;
+            offset = ptr->value;
             regStatus->setStyleSheet("QPushButton {background-color: green}");
             regStatus->update();
         }
