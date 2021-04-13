@@ -22,6 +22,24 @@
 #define AUTO_CONFIG(NAME,TYPE) NAME=settings.value(#NAME).to##TYPE();
 #define AUTO_SAVE_CONFIG(NAME) settings.setValue(#NAME,NAME);
 
+extern struct LaserCtrl
+{
+    QString name;
+    QString device;
+    quint8 decimals;
+    qreal stepsize;
+    qreal min;
+    qreal max;
+    qreal value;
+    qreal p;
+    qreal i;
+    qreal setpoint;
+    qreal maxerr;
+    qreal fb_max;
+    qreal fb_min;
+    qint16 fb_pending;
+} laser1,laser2;
+
 extern qint16 wm_channel;
 extern qint16 wm_channel_min;
 extern qint16 wm_channel_max;
@@ -36,21 +54,8 @@ extern qint16 chart_y_max;
 extern QString title_font_family;
 extern qint16 title_font_size;
 
-extern bool ao_enable;
-extern QString ao_device;
-extern qint8 ao_decimals;
-extern qreal ao_stepsize;
-extern qreal ao_min;
-extern qreal ao_max;
-extern qreal ao_value;
-
-extern qreal p_parameter;
-extern qreal i_parameter;
-extern qreal freq_setpoint;
-extern qreal freq_max_error;
-extern qreal feedback_max;
-extern qreal feedback_min;
-extern qint16 pending_time;
+extern bool ao1_enable;
+extern bool ao2_enable;
 
 extern QString arduino_port;
 extern bool servo1_enable;

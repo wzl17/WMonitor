@@ -25,6 +25,8 @@ MainWindow::~MainWindow()
 void MainWindow::initUI()
 {
     udpSocket = new UdpSocket;
+    QObject::connect(udpSocket, &UdpSocket::status,
+                     this, &MainWindow::statusShow);
     chartView = new ChartView;
     QObject::connect(udpSocket, &QUdpSocket::readyRead,
                      chartView, [=](){
@@ -33,7 +35,9 @@ void MainWindow::initUI()
             json->loadWavemeterData(udpSocket->receiveDatagram().data());
             chartView->series->replace(json->wm_pattern);
             chartView->chart->setTitle(QString("Frequency:%1 THz").arg(json->wm_freq,0,'f',5));
-            emit chartView->freqChanged(json->wm_freq);
+            if ( abs(json->wm_freq - laser1.setpoint ) <= abs(json->wm_freq - laser2.setpoint ) )
+                emit chartView->freqChanged1(json->wm_freq);
+            else emit chartView->freqChanged2(json->wm_freq);
             delete json;
         }
     });
@@ -42,12 +46,22 @@ void MainWindow::initUI()
     sideLayout = new QVBoxLayout;
     sideLayout->addWidget(udpSocket->groupWidget);
 
-    laserControl = new LaserControl;
-    QObject::connect(chartView, &ChartView::freqChanged,
-                     laserControl, &LaserControl::voltFeedback);
-    QObject::connect(laserControl, &LaserControl::error,
-                     this, &MainWindow::statusShow);
-    sideLayout->addWidget(laserControl->groupWidget);
+    if (ao1_enable) {
+        laserControl1 = new LaserControl(&laser1);
+        QObject::connect(chartView, &ChartView::freqChanged1,
+                         laserControl1, &LaserControl::voltFeedback);
+        QObject::connect(laserControl1, &LaserControl::error,
+                         this, &MainWindow::statusShow);
+        sideLayout->addWidget(laserControl1->groupWidget);
+    }
+    if (ao2_enable) {
+        laserControl2 = new LaserControl(&laser2);
+        QObject::connect(chartView, &ChartView::freqChanged2,
+                         laserControl2, &LaserControl::voltFeedback);
+        QObject::connect(laserControl2, &LaserControl::error,
+                         this, &MainWindow::statusShow);
+        sideLayout->addWidget(laserControl2->groupWidget);
+    }
     if (servo1_enable) {
         servo1 = new Shutters(servo1_name,servo1_channel,servo1_on,servo1_off,servo1_scan_on,servo1_scan_off,servo1_scan_on_time,servo1_scan_off_time);
         QObject::connect(servo1, &Shutters::error,
@@ -100,23 +114,40 @@ void MainWindow::readConfig()
     AUTO_CONFIG(title_font_size,Int);
     settings.endGroup();
 
-    settings.beginGroup("analog output");
-    AUTO_CONFIG(ao_enable,Bool);
-    AUTO_CONFIG(ao_device,String);
-    AUTO_CONFIG(ao_decimals,Int);
-    AUTO_CONFIG(ao_min,Real);
-    AUTO_CONFIG(ao_max,Real);
-    AUTO_CONFIG(ao_value,Real);
+    settings.beginGroup("laser1");
+    AUTO_CONFIG(ao1_enable,Bool);
+    laser1.name = settings.value("name1").toString();
+    laser1.device = settings.value("ao1_device").toString();
+    laser1.decimals = settings.value("ao1_decimals").toInt();
+    laser1.stepsize = settings.value("ao1_stepsize").toReal();
+    laser1.min = settings.value("ao1_min").toReal();
+    laser1.max = settings.value("ao1_max").toReal();
+    laser1.value = settings.value("ao1_value").toReal();
+    laser1.p = settings.value("fb1_p").toReal();
+    laser1.i = settings.value("fb1_i").toReal();
+    laser1.setpoint = settings.value("fb1_setpoint").toReal();
+    laser1.maxerr = settings.value("fb1_maxerr").toReal();
+    laser1.fb_min = settings.value("fb1_min").toReal();
+    laser1.fb_max = settings.value("fb1_max").toReal();
+    laser1.fb_pending = settings.value("fb1_pending").toReal();
     settings.endGroup();
 
-    settings.beginGroup("pid");
-    AUTO_CONFIG(p_parameter,Real);
-    AUTO_CONFIG(i_parameter,Real);
-    AUTO_CONFIG(freq_setpoint,Real);
-    AUTO_CONFIG(freq_max_error,Real);
-    AUTO_CONFIG(feedback_max,Real);
-    AUTO_CONFIG(feedback_min,Real);
-    AUTO_CONFIG(pending_time,Int);
+    settings.beginGroup("laser2");
+    AUTO_CONFIG(ao2_enable,Bool);
+    laser2.name = settings.value("name2").toString();
+    laser2.device = settings.value("ao2_device").toString();
+    laser2.decimals = settings.value("ao2_decimals").toInt();
+    laser2.stepsize = settings.value("ao2_stepsize").toReal();
+    laser2.min = settings.value("ao2_min").toReal();
+    laser2.max = settings.value("ao2_max").toReal();
+    laser2.value = settings.value("ao2_value").toReal();
+    laser2.p = settings.value("fb2_p").toReal();
+    laser2.i = settings.value("fb2_i").toReal();
+    laser2.setpoint = settings.value("fb2_setpoint").toReal();
+    laser2.maxerr = settings.value("fb2_maxerr").toReal();
+    laser2.fb_min = settings.value("fb2_min").toReal();
+    laser2.fb_max = settings.value("fb2_max").toReal();
+    laser2.fb_pending = settings.value("fb2_pending").toReal();
     settings.endGroup();
 
     settings.beginGroup("shutters");
@@ -176,19 +207,20 @@ void MainWindow::writeConfig()
     AUTO_SAVE_CONFIG(title_font_size);
     settings.endGroup();
 
-    settings.beginGroup("analog output");
-    AUTO_SAVE_CONFIG(ao_device);
-    AUTO_SAVE_CONFIG(ao_decimals);
-    AUTO_SAVE_CONFIG(ao_min);
-    AUTO_SAVE_CONFIG(ao_max);
-    AUTO_SAVE_CONFIG(ao_value);
+    settings.beginGroup("laser1");
+    settings.setValue("ao1_value",laser1.value);
+    settings.setValue("fb1_p",laser1.p);
+    settings.setValue("fb1_i",laser1.i);
+    settings.setValue("fb1_setpoint",laser1.setpoint);
+    settings.setValue("fb1_maxerr",laser1.maxerr);
     settings.endGroup();
 
-    settings.beginGroup("pid");
-    AUTO_SAVE_CONFIG(p_parameter);
-    AUTO_SAVE_CONFIG(i_parameter);
-    AUTO_SAVE_CONFIG(freq_setpoint);
-    AUTO_SAVE_CONFIG(freq_max_error);
+    settings.beginGroup("laser2");
+    settings.setValue("ao2_value",laser2.value);
+    settings.setValue("fb2_p",laser2.p);
+    settings.setValue("fb2_i",laser2.i);
+    settings.setValue("fb2_setpoint",laser2.setpoint);
+    settings.setValue("fb2_maxerr",laser2.maxerr);
     settings.endGroup();
 
     statusBar()->showMessage(QString("Loaded config.ini"));

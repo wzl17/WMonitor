@@ -22,7 +22,8 @@ public:
              QWidget *parent = nullptr);
     virtual ~Shutters();
 
-    Buttons *buttons;
+    OnOffButtons *onoff_buttons;
+    StartStopButtons *scan_buttons;
 
 signals:
     void error(const QString &s);
@@ -37,7 +38,7 @@ private:
     QString m_scan_off;
     QString m_scan_on_time;
     QString m_scan_off_time;
-    QGridLayout *gridLayout;
+    QVBoxLayout *boxLayout;
 
 private slots:
     void shutterON();

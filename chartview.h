@@ -21,8 +21,8 @@ public:
     QLineSeries *series;
 
 signals:
-    void freqChanged(double freq);
-
+    void freqChanged1(const qreal freq);
+    void freqChanged2(const qreal freq);
 };
 
 #endif // CHARTVIEW_H

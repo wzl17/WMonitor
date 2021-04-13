@@ -40,7 +40,7 @@ void UdpSocket::initConfigBox()
     channelWidget = new QWidget;
     channelWidget->setLayout(channelForm);
 
-    buttons = new Buttons(tr(""));
+    buttons = new StartStopButtons(tr(""));
     QObject::connect(buttons->startButton, &QPushButton::clicked,
                      this, &UdpSocket::startUDP);
     QObject::connect(buttons->stopButton, &QPushButton::clicked,
@@ -63,6 +63,7 @@ void UdpSocket::startUDP()
     if (!this->isOpen()) {
         this->open(QIODevice::ReadOnly);
         qDebug() << "UDP Started.";
+        emit status("UDP Started.");
         this->bind(udp_port,QUdpSocket::ShareAddress);
     }
 }
@@ -71,6 +72,7 @@ void UdpSocket::stopUDP()
 {
     if (this->isOpen()) {
         qDebug() << "UDP Stopped.";
+        emit status("UDP Stopped.");
         this->close();
     }
 }

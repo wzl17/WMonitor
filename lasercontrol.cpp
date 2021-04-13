@@ -1,7 +1,8 @@
 #include "lasercontrol.h"
 
-LaserControl::LaserControl(QWidget *parent)
+LaserControl::LaserControl(LaserCtrl *laser, QWidget *parent)
     : QWidget(parent)
+    , ptr(laser)
 {
     initDevice();
     initControlBox();
@@ -10,8 +11,6 @@ LaserControl::LaserControl(QWidget *parent)
 LaserControl::~LaserControl()
 {
     stopDevice();
-    delete deviceLabel;
-    delete deviceInput;
     delete voltageLabel;
     delete voltageInput;
     delete controlBoxGrid;
@@ -26,53 +25,46 @@ void LaserControl::initDevice()
 
 void LaserControl::initControlBox()
 {
-    groupWidget = new QGroupBox(tr("Laser Control"));
-
-    deviceLabel = new QLabel(tr("Device Name:"));
-    deviceInput = new QLineEdit;
-    deviceInput->setText(ao_device);
-    QObject::connect(deviceInput, &QLineEdit::editingFinished,
-                     this, &LaserControl::changeDevice);
+    groupWidget = new QGroupBox(ptr->name);
 
     voltageLabel = new QLabel(tr("Voltage:"));
     voltageInput = new QDoubleSpinBox;
-    voltageInput->setDecimals(ao_decimals);
-    voltageInput->setSingleStep(ao_stepsize);
-    voltageInput->setRange(ao_min, ao_max);
+    voltageInput->setDecimals(ptr->decimals);
+    voltageInput->setSingleStep(ptr->stepsize);
+    voltageInput->setRange(ptr->min, ptr->max);
     voltageInput->setSuffix(" V");
-    voltageInput->setValue(ao_value);
+    voltageInput->setValue(ptr->value);
     QObject::connect(voltageInput, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                      this, &LaserControl::changeVoltage);
 
     pLabel = new QLabel(tr("P(reg):"));
     pInput = new QLineEdit;
-    pInput->setText(QString::number(p_parameter,'f',2));
+    pInput->setText(QString::number(ptr->p,'f',2));
     QObject::connect(pInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeP);
     iLabel = new QLabel(tr("I(reg):"));
     iInput = new QLineEdit;
-    iInput->setText(QString::number(i_parameter,'f',2));
+    iInput->setText(QString::number(ptr->i,'f',2));
     QObject::connect(iInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeI);
-    setpLabel = new QLabel(tr("400 Setpoint:"));
+    setpLabel = new QLabel(tr("Setpoint:"));
     setpInput = new QLineEdit;
-    setpInput->setText(QString::number(freq_setpoint,'f',5));
+    setpInput->setText(QString::number(ptr->setpoint,'f',5));
     QObject::connect(setpInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeSetP);
-    merrLabel = new QLabel(tr("400 MaxError:"));
+    merrLabel = new QLabel(tr("MaxError:"));
     merrInput = new QLineEdit;
-    merrInput->setText(QString::number(freq_max_error,'f',5));
+    merrInput->setText(QString::number(ptr->maxerr,'f',5));
     QObject::connect(merrInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeMaxErr);
 
-    regLabel = new QLabel(tr("400regulation:"));
+    regLabel = new QLabel(tr("regulation:"));
     regStatus = new QCheckBox(tr("Locked"));
     regStatus->setChecked(false);
     feedback_counter = 0;
     err_sum = 0;
 
     controlBoxGrid = new QFormLayout;
-    controlBoxGrid->addRow(deviceLabel, deviceInput);
     controlBoxGrid->addRow(voltageLabel, voltageInput);
     controlBoxGrid->addRow(setpLabel, setpInput);
     controlBoxGrid->addRow(merrLabel, merrInput);
@@ -97,51 +89,44 @@ void LaserControl::startDevice()
     qDebug() << QString("Analog output start with code %1.")
                 .arg(DAQmxCreateAOVoltageChan(
                     taskHandle,
-                    ao_device.toUtf8(),
+                    ptr->device.toUtf8(),
                     "",
-                    ao_min,
-                    ao_max,
+                    ptr->min,
+                    ptr->max,
                     DAQmx_Val_Volts,
                     NULL));
     DAQmxStartTask(taskHandle);
 }
 
-void LaserControl::changeDevice()
-{
-    stopDevice();
-    ao_device = deviceInput->text();
-    startDevice();
-}
-
 void LaserControl::changeVoltage()
 {
-    ao_value = voltageInput->value();
+    ptr->value = voltageInput->value();
     qDebug() << DAQmxWriteAnalogScalarF64(
                 taskHandle,
                 false,
                 0,
-                ao_value,
+                ptr->value,
                 NULL);
 }
 
 void LaserControl::changeP()
 {
-    p_parameter = pInput->text().toDouble();
+    ptr->p = pInput->text().toDouble();
 }
 
 void LaserControl::changeI()
 {
-    i_parameter = iInput->text().toDouble();
+    ptr->i = iInput->text().toDouble();
 }
 
 void LaserControl::changeSetP()
 {
-    freq_setpoint = setpInput->text().toDouble();
+    ptr->setpoint = setpInput->text().toDouble();
 }
 
 void LaserControl::changeMaxErr()
 {
-    freq_max_error = merrInput->text().toDouble();
+    ptr->maxerr = merrInput->text().toDouble();
 }
 
 void LaserControl::voltFeedback(const qreal &freq)
@@ -149,22 +134,27 @@ void LaserControl::voltFeedback(const qreal &freq)
     if (!regStatus->isChecked()) {
         feedback_counter = 0;
         err_sum = 0.0;
+        offset = ptr->value;
         return;
     }
-    if (freq <=0) {
+    if (freq <=0) { // invalid wavelength
         regStatus->setChecked(false);
         return;
     }
-    qreal f_err = freq - freq_setpoint;
+    qreal f_err = freq - ptr->setpoint;
     // for error over maximum error, unchecked lock state and return
-    if (f_err >= freq_max_error) {
+    if (f_err >= ptr->maxerr) {
         regStatus->setChecked(false);
         return;
     }
     feedback_counter++;
     err_sum += f_err;
     // only do the feedback when the error is stable for given time
-    if (feedback_counter >= pending_time) {
-        voltageInput->setValue(qBound(feedback_min,err_sum*i_parameter+f_err*p_parameter,feedback_max)+ao_value);
+    if (feedback_counter >= ptr->fb_pending) {
+        voltageInput->setValue( offset + qBound(ptr->fb_min,
+                                      err_sum * ptr->i + f_err*ptr->p,
+                                      ptr->fb_max) );
     }
+    //emit feedbackDone();
+    return;
 }

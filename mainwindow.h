@@ -42,7 +42,8 @@ private:
     UdpSocket *udpSocket;
     ChartView *chartView;
     JsonData *json;
-    LaserControl *laserControl;
+    LaserControl *laserControl1;
+    LaserControl *laserControl2;
     Shutters *servo1;
     Shutters *servo2;
     Shutters *servo3;

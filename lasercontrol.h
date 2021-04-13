@@ -12,7 +12,8 @@ class LaserControl : public QWidget
     Q_OBJECT
 
 public:
-    explicit LaserControl(QWidget *parent = nullptr);
+    explicit LaserControl(LaserCtrl *laser,
+                          QWidget *parent = nullptr);
     ~LaserControl();
 
     QGroupBox *groupWidget;
@@ -28,8 +29,8 @@ private:
     void startDevice();
 
     TaskHandle taskHandle = 0;
-    QLabel *deviceLabel;
-    QLineEdit *deviceInput;
+    LaserCtrl *ptr;
+
     QLabel *voltageLabel;
     QDoubleSpinBox *voltageInput;
 
@@ -45,19 +46,19 @@ private:
     QLabel *regLabel;
     QCheckBox *regStatus;
     QLabel *shutterLabel;
-    Buttons *shutterButtons;
+    StartStopButtons *shutterButtons;
 
     QFormLayout *controlBoxGrid;
 
     qint32 feedback_counter;
     qreal err_sum;
+    qreal offset;
 
 signals:
     void error(QString &s);
+    void feedbackDone();
 
 public slots:
-    /// @brief Change the analog output device for laser control
-    void changeDevice();
     /// @brief Change analog output voltage
     void changeVoltage();
     /// @brief Change P parameter

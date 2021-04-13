@@ -8,13 +8,28 @@ QT_BEGIN_NAMESPACE
 class QGroupBox;
 QT_END_NAMESPACE
 
-class Buttons : public QGroupBox
+class OnOffButtons : public QGroupBox
 {
     Q_OBJECT
 
 public:
-    Buttons(const QString &title, QWidget *parent = nullptr);
-    virtual ~Buttons();
+    OnOffButtons(const QString &title, QWidget *parent = nullptr);
+    virtual ~OnOffButtons();
+
+    QPushButton *onButton;
+    QPushButton *offButton;
+private:
+    /// @brief Initiation of control buttons
+    void initButtons();
+};
+
+class StartStopButtons : public QGroupBox
+{
+    Q_OBJECT
+
+public:
+    StartStopButtons(const QString &title, QWidget *parent = nullptr);
+    virtual ~StartStopButtons();
 
     QPushButton *startButton;
     QPushButton *stopButton;

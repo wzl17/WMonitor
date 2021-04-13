@@ -15,7 +15,7 @@ public:
     ~UdpSocket();
 
     QGroupBox *groupWidget;
-    Buttons *buttons;
+    StartStopButtons *buttons;
     QWidget *channelWidget;
 
 private:
@@ -28,6 +28,9 @@ private:
     QLabel *channelLabel;
     QFormLayout *channelForm;
     QVBoxLayout *groupLayout;
+
+signals:
+    void status(const QString &s);
 
 private slots:
     /// @brief Update channel according to signal

@@ -23,20 +23,27 @@ Shutters::Shutters(const QString &name,
 
 Shutters::~Shutters()
 {
-    delete buttons;
-    delete gridLayout;
+    delete onoff_buttons;
+    delete scan_buttons;
+    delete boxLayout;
 }
 
 void Shutters::initShutter() {
-    gridLayout = new QGridLayout;
+    boxLayout = new QVBoxLayout;
 
-    buttons = new Buttons(tr(""));
-    QObject::connect(buttons->startButton, &QPushButton::clicked,
+    onoff_buttons = new OnOffButtons(tr(""));
+    QObject::connect(onoff_buttons->onButton, &QPushButton::clicked,
                      this, &Shutters::shutterON);
-    QObject::connect(buttons->stopButton, &QPushButton::clicked,
+    QObject::connect(onoff_buttons->offButton, &QPushButton::clicked,
                      this, &Shutters::shutterOFF);
-    gridLayout->addWidget(buttons);
-    this->setLayout(gridLayout);
+    boxLayout->addWidget(onoff_buttons);
+    scan_buttons = new StartStopButtons(tr("Scan:"));
+    QObject::connect(scan_buttons->startButton, &QPushButton::clicked,
+                     this, &Shutters::shutterScanON);
+    QObject::connect(scan_buttons->stopButton, &QPushButton::clicked,
+                     this, &Shutters::shutterScanOFF);
+    boxLayout->addWidget(scan_buttons);
+    this->setLayout(boxLayout);
 }
 
 void Shutters::shutterON() {
@@ -48,7 +55,7 @@ void Shutters::shutterON() {
                    .arg(arduino_port).arg(serial.error()) );
         return;
     }
-    const QByteArray command = (m_channel + " to " + m_on).toUtf8();
+    const QByteArray command = (m_channel + " to " + m_on + "(0,0)\n").toUtf8();
     qDebug() << command;
     serial.write(command);
     serial.close();
@@ -63,7 +70,7 @@ void Shutters::shutterOFF() {
                    .arg(arduino_port).arg(serial.error()) );
         return;
     }
-    const QByteArray command = (m_channel + " to " + m_off).toUtf8();
+    const QByteArray command = (m_channel + " to " + m_off + "(0,0)\n").toUtf8();
     qDebug() << command;
     serial.write(command);
     serial.close();
@@ -78,7 +85,7 @@ void Shutters::shutterScanON() {
                    .arg(arduino_port).arg(serial.error()) );
         return;
     }
-    const QByteArray command = (m_channel + " to " + m_scan_on).toUtf8();
+    const QByteArray command = (m_channel+" to "+m_scan_on+"("+m_scan_on_time+","+m_scan_off_time+")\n").toUtf8();
     qDebug() << command;
     serial.write(command);
     serial.close();
@@ -93,7 +100,7 @@ void Shutters::shutterScanOFF() {
                    .arg(arduino_port).arg(serial.error()) );
         return;
     }
-    const QByteArray command = (m_channel + " to " + m_scan_off).toUtf8();
+    const QByteArray command = (m_channel+" to "+m_scan_off+"("+m_scan_on_time+","+m_scan_off_time+")\n").toUtf8();
     qDebug() << command;
     serial.write(command);
     serial.close();
