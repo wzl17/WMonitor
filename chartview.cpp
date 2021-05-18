@@ -50,7 +50,7 @@ void PatternChart::initChart()
     //this->setRenderHint(QPainter::Antialiasing); //Disable to reduce %CPU
 }
 
-LaserFreqPlot::LaserFreqPlot(laserCtrl *laser, QWidget *parent) :
+LaserFreqPlot::LaserFreqPlot(Laser *laser, QWidget *parent) :
     QWidget(parent),
     chart(new QChart),
     series(new QLineSeries),
@@ -61,7 +61,6 @@ LaserFreqPlot::LaserFreqPlot(laserCtrl *laser, QWidget *parent) :
 
 LaserFreqPlot::~LaserFreqPlot()
 {
-    delete freqLabel;
 }
 
 void LaserFreqPlot::initPage()

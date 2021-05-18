@@ -1,7 +1,9 @@
 #include "buttons.h"
 
-OnOffButtons::OnOffButtons(const QString &title, QWidget *parent)
+OnOffButtons::OnOffButtons(const QString &title, const QString &on_name, const QString &off_name, QWidget *parent)
     : QGroupBox(title,parent)
+    , m_on(on_name)
+    , m_off(off_name)
 {
     initButtons();
 }
@@ -14,8 +16,8 @@ OnOffButtons::~OnOffButtons()
 
 void OnOffButtons::initButtons()
 {
-    onButton = new QPushButton(tr("ON"));
-    offButton = new QPushButton(tr("OFF"));
+    onButton = new QPushButton(m_on);
+    offButton = new QPushButton(m_off);
     QGridLayout *buttonGrid = new QGridLayout;
     buttonGrid->addWidget(onButton, 0, 0);
     buttonGrid->addWidget(offButton, 0, 1);

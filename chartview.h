@@ -27,7 +27,7 @@ class LaserFreqPlot : public QWidget
     Q_OBJECT
 
 public:
-    explicit LaserFreqPlot(LaserCtrl *laser, QWidget *parent = nullptr);
+    explicit LaserFreqPlot(Laser *laser, QWidget *parent = nullptr);
     ~LaserFreqPlot();
 
     QChart *chart;
@@ -36,7 +36,7 @@ public:
 private:
     void initPage();
 
-    LaserCtrl *m_laser;
+    Laser *m_laser;
     QVector<QPointF> m_buffer;
     quint16 count;
     QLabel *freqLabel;

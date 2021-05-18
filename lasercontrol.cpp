@@ -1,8 +1,8 @@
 #include "lasercontrol.h"
 
-LaserControl::LaserControl(LaserCtrl *laser, QWidget *parent)
+LaserControl::LaserControl(Laser *laser, QWidget *parent)
     : QWidget(parent)
-    , ptr(laser)
+    , m_laser(laser)
 {
     initDevice();
     initControlBox();
@@ -22,36 +22,36 @@ void LaserControl::initDevice()
 
 void LaserControl::initControlBox()
 {
-    groupWidget = new QGroupBox(ptr->name);
+    groupWidget = new QGroupBox(m_laser->name);
 
     voltageLabel = new QLabel(tr("Voltage:"));
     voltageInput = new QDoubleSpinBox;
-    voltageInput->setDecimals(ptr->decimals);
-    voltageInput->setSingleStep(ptr->stepsize);
-    voltageInput->setRange(ptr->min, ptr->max);
+    voltageInput->setDecimals(m_laser->decimals);
+    voltageInput->setSingleStep(m_laser->stepsize);
+    voltageInput->setRange(m_laser->min, m_laser->max);
     voltageInput->setSuffix(" V");
-    voltageInput->setValue(ptr->value);
+    voltageInput->setValue(m_laser->value);
     QObject::connect(voltageInput, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                      this, &LaserControl::changeVoltage);
 
     pLabel = new QLabel(tr("P(reg):"));
     pInput = new QLineEdit;
-    pInput->setText(QString::number(ptr->p,'f',2));
+    pInput->setText(QString::number(m_laser->p,'f',2));
     QObject::connect(pInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeP);
     iLabel = new QLabel(tr("I(reg):"));
     iInput = new QLineEdit;
-    iInput->setText(QString::number(ptr->i,'f',2));
+    iInput->setText(QString::number(m_laser->i,'f',2));
     QObject::connect(iInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeI);
     setpLabel = new QLabel(tr("Setpoint:"));
     setpInput = new QLineEdit;
-    setpInput->setText(QString::number(ptr->setpoint,'f',5));
+    setpInput->setText(QString::number(m_laser->setpoint,'f',5));
     QObject::connect(setpInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeSetP);
     merrLabel = new QLabel(tr("MaxError:"));
     merrInput = new QLineEdit;
-    merrInput->setText(QString::number(ptr->maxerr,'f',5));
+    merrInput->setText(QString::number(m_laser->maxerr,'f',5));
     QObject::connect(merrInput, &QLineEdit::editingFinished,
                      this, &LaserControl::changeMaxErr);
 
@@ -89,10 +89,10 @@ void LaserControl::startDevice()
     qDebug() << QString("Analog output start with code %1.")
                 .arg(DAQmxCreateAOVoltageChan(
                     taskHandle,
-                    ptr->device.toUtf8(),
+                    m_laser->device.toUtf8(),
                     "",
-                    ptr->min,
-                    ptr->max,
+                    m_laser->min,
+                    m_laser->max,
                     DAQmx_Val_Volts,
                     NULL));
     DAQmxStartTask(taskHandle);
@@ -100,52 +100,52 @@ void LaserControl::startDevice()
 
 void LaserControl::changeVoltage()
 {
-    ptr->value = voltageInput->value();
+    m_laser->value = voltageInput->value();
     qDebug() << DAQmxWriteAnalogScalarF64(
                 taskHandle,
                 false,
                 0,
-                ptr->value,
+                m_laser->value,
                 NULL);
 }
 
 void LaserControl::changeP()
 {
-    ptr->p = pInput->text().toDouble();
+    m_laser->p = pInput->text().toDouble();
 }
 
 void LaserControl::changeI()
 {
-    ptr->i = iInput->text().toDouble();
+    m_laser->i = iInput->text().toDouble();
 }
 
 void LaserControl::changeSetP()
 {
-    ptr->setpoint = setpInput->text().toDouble();
+    m_laser->setpoint = setpInput->text().toDouble();
 }
 
 void LaserControl::changeMaxErr()
 {
-    ptr->maxerr = merrInput->text().toDouble();
+    m_laser->maxerr = merrInput->text().toDouble();
 }
 
 void LaserControl::changeOffset()
 {
     if (regSwitch->isChecked()) {
-        if (abs(channels_freqs[ptr->wm_channel] - ptr->setpoint) > ptr->maxerr) { //out of range
+        if (abs(channels_freqs[m_laser->wm_channel] - m_laser->setpoint) > m_laser->maxerr) { //out of range
             regSwitch->setChecked(false);
-        } else offset = ptr->value;
+        } else offset = m_laser->value;
     } else regStatus->setStyleSheet("QPushButton {background-color: white}");
 }
 
 void LaserControl::voltFeedback()
 {
-    qreal f_err = channels_freqs[ptr->wm_channel] - ptr->setpoint;
+    qreal f_err = channels_freqs[m_laser->wm_channel] - m_laser->setpoint;
     if (!regSwitch->isChecked()) { // Regulation off
         return;
     }
     else {
-        if (abs(f_err) < ptr->maxerr) { //counts valid data
+        if (abs(f_err) < m_laser->maxerr) { //counts valid data
             feedback_counter++;
             err_sum += f_err;
             regStatus->setStyleSheet("QPushButton {background-color: green}");
@@ -158,10 +158,10 @@ void LaserControl::voltFeedback()
             err_sum = 0.0;
         }
         // only do the feedback when the error is stable for given time
-        if (feedback_counter >= ptr->fb_pending) {
-            voltageInput->setValue( offset + qBound(ptr->fb_min,
-                                    err_sum * ptr->i + f_err*ptr->p,
-                                    ptr->fb_max) );
+        if (feedback_counter >= m_laser->fb_pending) {
+            voltageInput->setValue( offset + qBound(m_laser->fb_min,
+                                    err_sum * m_laser->i + f_err*m_laser->p,
+                                    m_laser->fb_max) );
         }
     }
     return;

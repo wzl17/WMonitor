@@ -1,27 +1,14 @@
 #include "shutters.h"
 
-Shutters::Shutters(const QString &name,
-                   const QString &channel,
-                   const QString &on,
-                   const QString &off,
-                   const QString &scan_on,
-                   const QString &scan_off,
-                   const QString &scan_on_time,
-                   const QString &scan_off_time,
-                   QWidget *parent)
-    : QGroupBox(name,parent)
-    , m_channel(channel)
-    , m_on(on)
-    , m_off(off)
-    , m_scan_on(scan_on)
-    , m_scan_off(scan_off)
-    , m_scan_on_time(scan_on_time)
-    , m_scan_off_time(scan_off_time)
+ShutterControl::ShutterControl(Shutter *shutter, QWidget *parent)
+    : QGroupBox(parent)
+    , m_shutter(shutter)
 {
+    this->setTitle(m_shutter->name);
     initShutter();
 }
 
-Shutters::~Shutters()
+ShutterControl::~ShutterControl()
 {
     delete onoff_buttons;
     delete scan_buttons;
@@ -30,58 +17,58 @@ Shutters::~Shutters()
     delete serial;
 }
 
-void Shutters::initShutter() {
+void ShutterControl::initShutter() {
     boxLayout = new QVBoxLayout;
 
-    onoff_buttons = new OnOffButtons(tr(""));
+    onoff_buttons = new OnOffButtons(tr(""),m_shutter->on_name,m_shutter->off_name);
     QObject::connect(onoff_buttons->onButton, &QPushButton::clicked,
-                     this, &Shutters::shutterON);
+                     this, &ShutterControl::shutterON);
     QObject::connect(onoff_buttons->offButton, &QPushButton::clicked,
-                     this, &Shutters::shutterOFF);
+                     this, &ShutterControl::shutterOFF);
     boxLayout->addWidget(onoff_buttons);
     scan_buttons = new StartStopButtons(tr("Scan:"));
     QObject::connect(scan_buttons->startButton, &QPushButton::clicked,
-                     this, &Shutters::shutterScanON);
+                     this, &ShutterControl::shutterScanON);
     QObject::connect(scan_buttons->stopButton, &QPushButton::clicked,
-                     this, &Shutters::shutterScanOFF);
+                     this, &ShutterControl::shutterScanOFF);
     boxLayout->addWidget(scan_buttons);
     this->setLayout(boxLayout);
     serial = new QSerialPort;
     serial->close();
-    serial->setPortName(arduino_port);
+    serial->setPortName(shutters_arduino_port);
     if (!serial->open(QIODevice::ReadWrite)) {
         emit error( tr("Can't open %1, error code %2")
-                   .arg(arduino_port).arg(serial->error()) );
+                   .arg(shutters_arduino_port).arg(serial->error()) );
     }
     QObject::connect(serial, &QSerialPort::readyRead,
-                     this, &Shutters::readStatus);
+                     this, &ShutterControl::readStatus);
 }
 
-void Shutters::shutterON() {
-    const QByteArray command = (m_channel + " to " + m_on + "(0,0)\n").toUtf8();
+void ShutterControl::shutterON() {
+    const QByteArray command = (m_shutter->channel + " to " + m_shutter->on_command + "(0,0)\n").toUtf8();
     qDebug() << command;
     serial->write(command);
 }
 
-void Shutters::shutterOFF() {
-    const QByteArray command = (m_channel + " to " + m_off + "(0,0)\n").toUtf8();
+void ShutterControl::shutterOFF() {
+    const QByteArray command = (m_shutter->channel + " to " + m_shutter->off_command + "(0,0)\n").toUtf8();
     qDebug() << command;
     serial->write(command);
 }
 
-void Shutters::shutterScanON() {
-    const QByteArray command = (m_channel+" to "+m_scan_on+"("+m_scan_on_time+","+m_scan_off_time+")\n").toUtf8();
+void ShutterControl::shutterScanON() {
+    const QByteArray command = (m_shutter->channel+" to "+m_shutter->scan_on_command+"("+m_shutter->scan_on_time+","+m_shutter->scan_off_time+")\n").toUtf8();
     qDebug() << command;
     serial->write(command);
 }
 
-void Shutters::shutterScanOFF() {
-    const QByteArray command = (m_channel+" to "+m_scan_off+"("+m_scan_on_time+","+m_scan_off_time+")\n").toUtf8();
+void ShutterControl::shutterScanOFF() {
+    const QByteArray command = (m_shutter->channel+" to "+m_shutter->scan_off_command+"("+m_shutter->scan_on_time+","+m_shutter->scan_off_time+")\n").toUtf8();
     qDebug() << command;
     serial->write(command);
 }
 
-void Shutters::readStatus() {
+void ShutterControl::readStatus() {
     QByteArray buf = serial->readAll();
     emit error(buf);
 }

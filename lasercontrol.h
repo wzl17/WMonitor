@@ -11,7 +11,7 @@ class LaserControl : public QWidget
     Q_OBJECT
 
 public:
-    LaserControl(LaserCtrl *laser, QWidget *parent = nullptr);
+    LaserControl(Laser *laser, QWidget *parent = nullptr);
     ~LaserControl();
 
     QGroupBox *groupWidget;
@@ -27,7 +27,7 @@ private:
     void startDevice();
 
     TaskHandle taskHandle = 0;
-    LaserCtrl *ptr;
+    Laser *m_laser;
 
     QLabel *voltageLabel;
     QDoubleSpinBox *voltageInput;

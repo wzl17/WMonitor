@@ -47,50 +47,43 @@ void MainWindow::initUI()
         }
     });
 
+    qint16 i = 0;
+
     // laser freq plot
     laserFreqTabs = new QTabWidget;
     for (i = 0; i < lasers.size(); ++i) {
         if (lasers.at(i).ao_enable) {
             new_freqplot = new LaserFreqPlot(&lasers[i]);
-            laserFreqTabs->addTab(new_freqplot, lasers.at(i).name);
             QObject::connect(this, &MainWindow::freqReceived,
                              new_freqplot, &LaserFreqPlot::updateFreq);
+            laserFreqTabs->addTab(new_freqplot, lasers.at(i).name);
         }
     }
-    mainLayout->addWidget(laserFreqTabs);
-    mainLayout->addWidget(pattern);
 
+    // NI card based laser control
     for (i = 0; i < lasers.size(); ++i) {
         if (lasers.at(i).ao_enable) {
-            new_ctrl = new LaserControl(&lasers[i]);
+            new_laserctrl = new LaserControl(&lasers[i]);
             QObject::connect(this, &MainWindow::freqReceived,
-                             new_ctrl, &LaserControl::voltFeedback);
-            QObject::connect(new_ctrl, &LaserControl::error,
+                             new_laserctrl, &LaserControl::voltFeedback);
+            QObject::connect(new_laserctrl, &LaserControl::error,
                              this, &MainWindow::statusShow);
-            sideLayout->addWidget(new_ctrl->groupWidget);
+            sideLayout->addWidget(new_laserctrl->groupWidget);
         }
     }
 
-
-    if (servo1_enable) {
-        servo1 = new Shutters(servo1_name,servo1_channel,servo1_on,servo1_off,servo1_scan_on,servo1_scan_off,servo1_scan_on_time,servo1_scan_off_time);
-        QObject::connect(servo1, &Shutters::error,
-                         this, &MainWindow::statusShow);
-        sideLayout->addWidget(servo1);
-    }
-    if (servo2_enable) {
-        servo2 = new Shutters(servo2_name,servo2_channel,servo2_on,servo2_off,servo2_scan_on,servo2_scan_off,servo2_scan_on_time,servo2_scan_off_time);
-        QObject::connect(servo2, &Shutters::error,
-                         this, &MainWindow::statusShow);
-        sideLayout->addWidget(servo2);
-    }
-    if (servo3_enable) {
-        servo3 = new Shutters(servo3_name,servo3_channel,servo3_on,servo3_off,servo3_scan_on,servo3_scan_off,servo3_scan_on_time,servo3_scan_off_time);
-        QObject::connect(servo3, &Shutters::error,
-                         this, &MainWindow::statusShow);
-        sideLayout->addWidget(servo3);
+    // servo shutter control
+    for (i = 0; i < shutters.size(); ++i) {
+        if (shutters.at(i).servo_enable) {
+            new_shutterctrl = new ShutterControl(&shutters[i]);
+            QObject::connect(new_shutterctrl, &ShutterControl::error,
+                             this, &MainWindow::statusShow);
+            sideLayout->addWidget(new_shutterctrl);
+        }
     }
 
+    mainLayout->addWidget(laserFreqTabs);
+    mainLayout->addWidget(pattern);
     sideLayout->addStretch(-1);
     mainLayout->addLayout(sideLayout);
     mainLayout->setStretch(0,1);
@@ -106,6 +99,8 @@ void MainWindow::readConfig()
 
     settings.beginGroup("global");
     AUTO_CONFIG(laser_num,Int);
+    AUTO_CONFIG(shutter_num,Int);
+    AUTO_CONFIG(shutters_arduino_port,String);
     settings.endGroup();
 
     settings.beginGroup("wavemeter");
@@ -128,9 +123,12 @@ void MainWindow::readConfig()
     AUTO_CONFIG(pattern_title_font_size,Int);
     settings.endGroup();
 
+    qint16 i = 0;
+
     for (i = 0; i < laser_num; ++i) {
         settings.beginGroup(QString("laser%1").arg(i));
-        lasers.append( (LaserCtrl){settings.value("ao_enable").toBool(),
+        lasers.append( (Laser){
+            settings.value("ao_enable").toBool(),
             settings.value("name").toString(),
             settings.value("wm_channel").toUInt(),
             settings.value("ao_device").toString(),
@@ -153,35 +151,22 @@ void MainWindow::readConfig()
     qDebug() << channels_lasers;
     channels = channels_lasers.uniqueKeys();
 
-    settings.beginGroup("shutters");
-    AUTO_CONFIG(arduino_port,String);
-    AUTO_CONFIG(servo1_enable,Bool);
-    AUTO_CONFIG(servo1_name,String);
-    AUTO_CONFIG(servo1_channel,String);
-    AUTO_CONFIG(servo1_on,String);
-    AUTO_CONFIG(servo1_off,String);
-    AUTO_CONFIG(servo1_scan_on,String);
-    AUTO_CONFIG(servo1_scan_off,String);
-    AUTO_CONFIG(servo1_scan_on_time,String);
-    AUTO_CONFIG(servo1_scan_off_time,String);
-    AUTO_CONFIG(servo2_enable,Bool);
-    AUTO_CONFIG(servo2_name,String);
-    AUTO_CONFIG(servo2_channel,String);
-    AUTO_CONFIG(servo2_on,String);
-    AUTO_CONFIG(servo2_off,String);
-    AUTO_CONFIG(servo2_scan_on,String);
-    AUTO_CONFIG(servo2_scan_off,String);
-    AUTO_CONFIG(servo2_scan_on_time,String);
-    AUTO_CONFIG(servo2_scan_off_time,String);
-    AUTO_CONFIG(servo3_enable,Bool);
-    AUTO_CONFIG(servo3_name,String);
-    AUTO_CONFIG(servo3_channel,String);
-    AUTO_CONFIG(servo3_on,String);
-    AUTO_CONFIG(servo3_off,String);
-    AUTO_CONFIG(servo3_scan_on,String);
-    AUTO_CONFIG(servo3_scan_off,String);
-    AUTO_CONFIG(servo3_scan_on_time,String);
-    AUTO_CONFIG(servo3_scan_off_time,String);
+    for (i = 0; i < shutter_num; ++i) {
+        settings.beginGroup(QString("shutter%1").arg(i));
+        shutters.append( (Shutter){
+            settings.value("servo_enable").toBool(),
+            settings.value("name").toString(),
+            settings.value("channel").toString(),
+            settings.value("on_name").toString(),
+            settings.value("off_name").toString(),
+            settings.value("on_command").toString(),
+            settings.value("off_command").toString(),
+            settings.value("scan_on_command").toString(),
+            settings.value("scan_off_command").toString(),
+            settings.value("scan_on_time").toString(),
+            settings.value("scan_off_time").toString()}  );
+        settings.endGroup();
+    }
 
     statusBar()->showMessage(QString("Loaded config.ini"));
 }
@@ -190,25 +175,7 @@ void MainWindow::writeConfig()
 {
     QSettings settings(config_dir, QSettings::IniFormat);
 
-    settings.beginGroup("wavemeter");
-    AUTO_SAVE_CONFIG(wm_channel_min);
-    AUTO_SAVE_CONFIG(wm_channel_max);
-    AUTO_SAVE_CONFIG(udp_port);
-    settings.endGroup();
-
-    settings.beginGroup("chart");
-    AUTO_SAVE_CONFIG(pattern_x_min);
-    AUTO_SAVE_CONFIG(pattern_x_max);
-    AUTO_SAVE_CONFIG(pattern_x_tick_counts);
-    AUTO_SAVE_CONFIG(pattern_y_min);
-    AUTO_SAVE_CONFIG(pattern_y_max);
-    AUTO_SAVE_CONFIG(freqplot_x_length);
-    settings.endGroup();
-
-    settings.beginGroup("font");
-    AUTO_SAVE_CONFIG(pattern_title_font_family);
-    AUTO_SAVE_CONFIG(pattern_title_font_size);
-    settings.endGroup();
+    qint16 i = 0;
 
     for (i = 0; i < lasers.size(); ++i) {
         settings.beginGroup(QString("laser%1").arg(i));
@@ -219,8 +186,6 @@ void MainWindow::writeConfig()
         settings.setValue("fb_maxerr",lasers[i].maxerr);
         settings.endGroup();
     }
-
-    statusBar()->showMessage(QString("Loaded config.ini"));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

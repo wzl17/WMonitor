@@ -13,7 +13,7 @@ class OnOffButtons : public QGroupBox
     Q_OBJECT
 
 public:
-    OnOffButtons(const QString &title, QWidget *parent = nullptr);
+    OnOffButtons(const QString &title, const QString &on_name, const QString &off_name, QWidget *parent = nullptr);
     virtual ~OnOffButtons();
 
     QPushButton *onButton;
@@ -21,6 +21,9 @@ public:
 private:
     /// @brief Initiation of control buttons
     void initButtons();
+
+    QString m_on;
+    QString m_off;
 };
 
 class StartStopButtons : public QGroupBox

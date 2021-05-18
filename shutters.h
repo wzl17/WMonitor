@@ -6,21 +6,13 @@
 #include <QSerialPort>
 #include <QMutex>
 
-class Shutters : public QGroupBox
+class ShutterControl : public QGroupBox
 {
     Q_OBJECT
 
 public:
-    Shutters(const QString &name,
-             const QString &channel,
-             const QString &on,
-             const QString &off,
-             const QString &scan_on,
-             const QString &scan_off,
-             const QString &scan_on_time,
-             const QString &scan_off_time,
-             QWidget *parent = nullptr);
-    virtual ~Shutters();
+    ShutterControl(Shutter *shutter, QWidget *parent = nullptr);
+    virtual ~ShutterControl();
 
     OnOffButtons *onoff_buttons;
     StartStopButtons *scan_buttons;
@@ -31,13 +23,7 @@ signals:
 private:
     void initShutter();
     QSerialPort *serial;
-    QString m_channel;
-    QString m_on;
-    QString m_off;
-    QString m_scan_on;
-    QString m_scan_off;
-    QString m_scan_on_time;
-    QString m_scan_off_time;
+    Shutter *m_shutter;
     QVBoxLayout *boxLayout;
 
 private slots:

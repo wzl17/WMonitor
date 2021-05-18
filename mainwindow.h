@@ -51,16 +51,12 @@ private:
     UdpSocket *udpSocket;
     PatternChart *pattern;
     JsonData *json;
-    LaserControl *new_ctrl;
+    LaserControl *new_laserctrl;
     LaserFreqPlot *new_freqplot;
-    Shutters *servo1;
-    Shutters *servo2;
-    Shutters *servo3;
+    ShutterControl *new_shutterctrl;
 
     /// @brief directory of config.ini
     QString config_dir;
-
-    qint16 i;
 
 signals:
     void freqReceived();
