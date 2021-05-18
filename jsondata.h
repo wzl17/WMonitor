@@ -16,14 +16,12 @@ public:
 
     /// @brief wavemeter pattern data
     QList<QPointF> wm_pattern;
-    /// @brief frequency value read from wavemeter channel
-    qreal wm_freq;
 
     /// @brief json string data input
     void loadWavemeterData(const QByteArray &data);
 
 private:
-    qint8 m_ch;
+    qint16 m_ch;
 };
 
 #endif // JSONDATA_H

@@ -4,9 +4,8 @@
 
 JsonData::JsonData()
     : wm_pattern({})
-    , wm_freq(-1)
 {
-
+    wm_pattern.reserve(pattern_x_max+1);
 }
 
 JsonData::~JsonData()
@@ -15,13 +14,15 @@ JsonData::~JsonData()
 
 void JsonData::loadWavemeterData(const QByteArray &data)
 {
-    m_ch = qBound(wm_channel_min, wm_channel, wm_channel_max) - 1;
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
-    QJsonArray tempArray = doc[m_ch]["PatternData"].toArray();
+    QJsonArray tempArray = doc[pattern_channel-1]["PatternData"].toArray();
     for ( qint32 i = 0; i < tempArray.size(); i++ ) {
         wm_pattern.append( QPointF( i, tempArray[i].toDouble() ) );
     }
-    wm_freq = doc[m_ch]["Frequency"].toDouble();
+    for (qint16 i = 0; i < channels.size(); ++i) { // update the freq of all listed channels
+        m_ch = qBound(wm_channel_min, channels[i], wm_channel_max);
+        channels_freqs[m_ch] = doc[m_ch-1]["Frequency"].toDouble();
+    }
 }
 

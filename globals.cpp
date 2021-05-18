@@ -2,55 +2,27 @@
 
 //default settings of parameters
 
-LaserCtrl laser1 = {
-    "399nm",
-    "Dev1/ao0",
-    3,
-    0.001,
-    0,
-    10,
-    0.078,
-    10.0,
-    0.0,
-    751.52643,
-    0.00001,
-    -0.01,
-    0.01,
-    5
-};
-LaserCtrl laser2 = {
-    "369nm",
-    "Dev1/ao4",
-    3,
-    0.001,
-    0,
-    10,
-    0.078,
-    10.0,
-    0.0,
-    811.29120,
-    0.00001,
-    -0.01,
-    0.01,
-    5
-};
+QVector<laserCtrl> lasers = {};
+QMultiMap<qint16, qint16> channels_lasers = {};
+QMap<qint16, qreal> channels_freqs = {};
+QList<qint16> channels = {};
 
-qint16 wm_channel = 2;
+qint16 laser_num = 0;
+
 qint16 wm_channel_min = 1;
 qint16 wm_channel_max = 9;
 qint32 udp_port = 9898;
 
-qint16 chart_x_min = 0;
-qint16 chart_x_max = 2048;
-qint8 chart_x_tick_counts = 5;
-qint16 chart_y_min = 0;
-qint16 chart_y_max = 4000;
+qint16 pattern_channel = 2;
+qint16 pattern_x_min = 0;
+qint16 pattern_x_max = 2048;
+qint8 pattern_x_tick_counts = 5;
+qint16 pattern_y_min = 0;
+qint16 pattern_y_max = 4000;
+qint16 freqplot_x_length = 100;
 
-QString title_font_family = "Times";
-qint16 title_font_size = 30;
-
-bool ao1_enable = true;
-bool ao2_enable = false;
+QString pattern_title_font_family = "Times";
+qint16 pattern_title_font_size = 20;
 
 QString arduino_port = "COM3";
 bool servo1_enable = true;

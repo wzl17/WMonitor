@@ -7,22 +7,43 @@
 
 QT_CHARTS_USE_NAMESPACE
 
-class ChartView : public QChartView
+class PatternChart : public QWidget
 {
     Q_OBJECT
 
 public:
-    ChartView(QWidget *parent = nullptr);
+    PatternChart(QWidget *parent = nullptr);
+    ~PatternChart();
 
     /// @brief Initiation of chart plotting
     void initChart();
 
     QChart *chart;
     QLineSeries *series;
+};
 
-signals:
-    void freqChanged1(const qreal freq);
-    void freqChanged2(const qreal freq);
+class LaserFreqPlot : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit LaserFreqPlot(LaserCtrl *laser, QWidget *parent = nullptr);
+    ~LaserFreqPlot();
+
+    QChart *chart;
+    QLineSeries *series;
+
+private:
+    void initPage();
+
+    LaserCtrl *m_laser;
+    QVector<QPointF> m_buffer;
+    quint16 count;
+    QLabel *freqLabel;
+
+public slots:
+    void updateFreq();
+
 };
 
 #endif // CHARTVIEW_H

@@ -11,21 +11,6 @@ LaserControl::LaserControl(LaserCtrl *laser, QWidget *parent)
 LaserControl::~LaserControl()
 {
     stopDevice();
-    delete voltageLabel;
-    delete voltageInput;
-    delete pLabel;
-    delete pInput;
-    delete iLabel;
-    delete iInput;
-    delete setpLabel;
-    delete setpInput;
-    delete merrLabel;
-    delete merrInput;
-    delete regStatus;
-    delete regSwitch;
-    delete shutterLabel;
-    delete shutterButtons;
-    delete controlBoxGrid;
     delete groupWidget;
 }
 
@@ -75,7 +60,9 @@ void LaserControl::initControlBox()
     regSwitch = new QCheckBox(tr("Regulation"));
     regSwitch->setChecked(false);
     feedback_counter = 0;
-    err_sum = 0;
+    err_sum = 0.0;
+    QObject::connect(regSwitch, &QCheckBox::clicked,
+                     this, &LaserControl::changeOffset);
 
     controlBoxGrid = new QFormLayout;
     controlBoxGrid->addRow(voltageLabel, voltageInput);
@@ -142,21 +129,29 @@ void LaserControl::changeMaxErr()
     ptr->maxerr = merrInput->text().toDouble();
 }
 
-void LaserControl::voltFeedback(const qreal &freq)
+void LaserControl::changeOffset()
 {
-    qreal f_err = freq - ptr->setpoint;
+    if (regSwitch->isChecked()) {
+        if (abs(channels_freqs[ptr->wm_channel] - ptr->setpoint) > ptr->maxerr) { //out of range
+            regSwitch->setChecked(false);
+        } else offset = ptr->value;
+    } else regStatus->setStyleSheet("QPushButton {background-color: white}");
+}
+
+void LaserControl::voltFeedback()
+{
+    qreal f_err = channels_freqs[ptr->wm_channel] - ptr->setpoint;
     if (!regSwitch->isChecked()) { // Regulation off
         return;
     }
     else {
-        if (abs(f_err) < ptr->maxerr) { //counts valid error data
+        if (abs(f_err) < ptr->maxerr) { //counts valid data
             feedback_counter++;
             err_sum += f_err;
-            offset = ptr->value;
             regStatus->setStyleSheet("QPushButton {background-color: green}");
             regStatus->update();
         }
-        else { //not locked, change lock state and clear counts
+        else { //not locked or showing wrong freq, change lock state and clear counts
             regStatus->setStyleSheet("QPushButton {background-color: white}");
             regStatus->update();
             feedback_counter = 0;

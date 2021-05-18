@@ -32,24 +32,38 @@ private:
     void readConfig();
     /// @brief Write current settings to config.ini
     void writeConfig();
+    /// @brief Read Config.ini for laser parameters setting
+    void readLaserConfig();
+    /// @brief Write current laser settings to config.ini
+    void writeLaserConfig();
+    /// @brief Read Config.ini for laser parameters setting
+    void readShutterConfig();
+    /// @brief Write current laser settings to config.ini
+    void writeShutterConfig();
     /// @brief Initiation of UI
     void initUI();
 
     Ui::MainWindow *ui;
     QWidget *mainWidget;
-    QHBoxLayout *mainLayout;
-    QVBoxLayout *sideLayout;
+    QVBoxLayout *mainLayout;
+    QTabWidget *laserFreqTabs;
+    QHBoxLayout *sideLayout;
     UdpSocket *udpSocket;
-    ChartView *chartView;
+    PatternChart *pattern;
     JsonData *json;
-    LaserControl *laserControl1;
-    LaserControl *laserControl2;
+    LaserControl *new_ctrl;
+    LaserFreqPlot *new_freqplot;
     Shutters *servo1;
     Shutters *servo2;
     Shutters *servo3;
 
     /// @brief directory of config.ini
     QString config_dir;
+
+    qint16 i;
+
+signals:
+    void freqReceived();
 
 public slots:
     void statusShow(const QString &s);

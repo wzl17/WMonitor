@@ -28,13 +28,13 @@ void UdpSocket::initConfigBox()
 {
     groupWidget = new QGroupBox(tr("UDP connection"));
 
-    channelLabel = new QLabel(tr("WM Channel:"));
+    channelLabel = new QLabel(tr("Pattern Channel:"));
     channelBox = new QSpinBox;
     channelBox->setRange(1,9);
     channelBox->setSingleStep(1);
     QObject::connect(channelBox, QOverload<int>::of(&QSpinBox::valueChanged),
                      this, &UdpSocket::switchChannel);
-    channelBox->setValue(wm_channel);
+    channelBox->setValue(pattern_channel);
     channelForm = new QFormLayout;
     channelForm->addRow(channelLabel,channelBox);
     channelWidget = new QWidget;
@@ -55,7 +55,7 @@ void UdpSocket::initConfigBox()
 
 void UdpSocket::switchChannel(qint16 newchannel)
 {
-    wm_channel = newchannel;
+    pattern_channel = newchannel;
 }
 
 void UdpSocket::startUDP()

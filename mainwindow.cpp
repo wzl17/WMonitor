@@ -24,44 +24,54 @@ MainWindow::~MainWindow()
 
 void MainWindow::initUI()
 {
+    mainLayout = new QVBoxLayout;
+    sideLayout = new QHBoxLayout;
+
+    // udp connection to the wavemeter
     udpSocket = new UdpSocket;
     QObject::connect(udpSocket, &UdpSocket::status,
                      this, &MainWindow::statusShow);
-    chartView = new ChartView;
+    sideLayout->addWidget(udpSocket->groupWidget);
+
+    // wavemeter pattern display
+    pattern = new PatternChart;
     QObject::connect(udpSocket, &QUdpSocket::readyRead,
-                     chartView, [=](){
+                     this, [=](){
         while (udpSocket->hasPendingDatagrams()) {
             json = new JsonData;
             json->loadWavemeterData(udpSocket->receiveDatagram().data());
-            chartView->series->replace(json->wm_pattern);
-            chartView->chart->setTitle(QString("Frequency:%1 THz").arg(json->wm_freq,0,'f',5));
-            if ( abs(json->wm_freq - laser1.setpoint ) <= abs(json->wm_freq - laser2.setpoint ) )
-                emit chartView->freqChanged1(json->wm_freq);
-            else emit chartView->freqChanged2(json->wm_freq);
+            pattern->series->replace(json->wm_pattern);
+            pattern->chart->setTitle(QString("Frequency:%1 THz").arg(channels_freqs[pattern_channel],0,'f',5));
+            emit freqReceived(); // this triggers pid at lasercontrols
             delete json;
         }
     });
-    mainLayout = new QHBoxLayout;
-    mainLayout->addWidget(chartView);
-    sideLayout = new QVBoxLayout;
-    sideLayout->addWidget(udpSocket->groupWidget);
 
-    if (ao1_enable) {
-        laserControl1 = new LaserControl(&laser1);
-        QObject::connect(chartView, &ChartView::freqChanged1,
-                         laserControl1, &LaserControl::voltFeedback);
-        QObject::connect(laserControl1, &LaserControl::error,
-                         this, &MainWindow::statusShow);
-        sideLayout->addWidget(laserControl1->groupWidget);
+    // laser freq plot
+    laserFreqTabs = new QTabWidget;
+    for (i = 0; i < lasers.size(); ++i) {
+        if (lasers.at(i).ao_enable) {
+            new_freqplot = new LaserFreqPlot(&lasers[i]);
+            laserFreqTabs->addTab(new_freqplot, lasers.at(i).name);
+            QObject::connect(this, &MainWindow::freqReceived,
+                             new_freqplot, &LaserFreqPlot::updateFreq);
+        }
     }
-    if (ao2_enable) {
-        laserControl2 = new LaserControl(&laser2);
-        QObject::connect(chartView, &ChartView::freqChanged2,
-                         laserControl2, &LaserControl::voltFeedback);
-        QObject::connect(laserControl2, &LaserControl::error,
-                         this, &MainWindow::statusShow);
-        sideLayout->addWidget(laserControl2->groupWidget);
+    mainLayout->addWidget(laserFreqTabs);
+    mainLayout->addWidget(pattern);
+
+    for (i = 0; i < lasers.size(); ++i) {
+        if (lasers.at(i).ao_enable) {
+            new_ctrl = new LaserControl(&lasers[i]);
+            QObject::connect(this, &MainWindow::freqReceived,
+                             new_ctrl, &LaserControl::voltFeedback);
+            QObject::connect(new_ctrl, &LaserControl::error,
+                             this, &MainWindow::statusShow);
+            sideLayout->addWidget(new_ctrl->groupWidget);
+        }
     }
+
+
     if (servo1_enable) {
         servo1 = new Shutters(servo1_name,servo1_channel,servo1_on,servo1_off,servo1_scan_on,servo1_scan_off,servo1_scan_on_time,servo1_scan_off_time);
         QObject::connect(servo1, &Shutters::error,
@@ -83,7 +93,7 @@ void MainWindow::initUI()
 
     sideLayout->addStretch(-1);
     mainLayout->addLayout(sideLayout);
-    mainLayout->setStretch(0,3);
+    mainLayout->setStretch(0,1);
     mainLayout->setStretch(1,1);
     mainWidget = new QWidget;
     this->setCentralWidget(mainWidget);
@@ -94,61 +104,54 @@ void MainWindow::readConfig()
 {
     QSettings settings(config_dir, QSettings::IniFormat);
 
+    settings.beginGroup("global");
+    AUTO_CONFIG(laser_num,Int);
+    settings.endGroup();
+
     settings.beginGroup("wavemeter");
-    AUTO_CONFIG(wm_channel,Int);
     AUTO_CONFIG(wm_channel_min,Int);
     AUTO_CONFIG(wm_channel_max,Int);
     AUTO_CONFIG(udp_port,Int);
     settings.endGroup();
 
     settings.beginGroup("chart");
-    AUTO_CONFIG(chart_x_min,Int);
-    AUTO_CONFIG(chart_x_max,Int);
-    AUTO_CONFIG(chart_x_tick_counts,Int);
-    AUTO_CONFIG(chart_y_min,Int);
-    AUTO_CONFIG(chart_y_max,Int);
+    AUTO_CONFIG(pattern_x_min,Int);
+    AUTO_CONFIG(pattern_x_max,Int);
+    AUTO_CONFIG(pattern_x_tick_counts,Int);
+    AUTO_CONFIG(pattern_y_min,Int);
+    AUTO_CONFIG(pattern_y_max,Int);
+    AUTO_CONFIG(freqplot_x_length,Int);
     settings.endGroup();
 
     settings.beginGroup("font");
-    AUTO_CONFIG(title_font_family,String);
-    AUTO_CONFIG(title_font_size,Int);
+    AUTO_CONFIG(pattern_title_font_family,String);
+    AUTO_CONFIG(pattern_title_font_size,Int);
     settings.endGroup();
 
-    settings.beginGroup("laser1");
-    AUTO_CONFIG(ao1_enable,Bool);
-    laser1.name = settings.value("name1").toString();
-    laser1.device = settings.value("ao1_device").toString();
-    laser1.decimals = settings.value("ao1_decimals").toInt();
-    laser1.stepsize = settings.value("ao1_stepsize").toReal();
-    laser1.min = settings.value("ao1_min").toReal();
-    laser1.max = settings.value("ao1_max").toReal();
-    laser1.value = settings.value("ao1_value").toReal();
-    laser1.p = settings.value("fb1_p").toReal();
-    laser1.i = settings.value("fb1_i").toReal();
-    laser1.setpoint = settings.value("fb1_setpoint").toReal();
-    laser1.maxerr = settings.value("fb1_maxerr").toReal();
-    laser1.fb_min = settings.value("fb1_min").toReal();
-    laser1.fb_max = settings.value("fb1_max").toReal();
-    laser1.fb_pending = settings.value("fb1_pending").toReal();
-    settings.endGroup();
-
-    settings.beginGroup("laser2");
-    AUTO_CONFIG(ao2_enable,Bool);
-    laser2.name = settings.value("name2").toString();
-    laser2.device = settings.value("ao2_device").toString();
-    laser2.decimals = settings.value("ao2_decimals").toInt();
-    laser2.stepsize = settings.value("ao2_stepsize").toReal();
-    laser2.min = settings.value("ao2_min").toReal();
-    laser2.max = settings.value("ao2_max").toReal();
-    laser2.value = settings.value("ao2_value").toReal();
-    laser2.p = settings.value("fb2_p").toReal();
-    laser2.i = settings.value("fb2_i").toReal();
-    laser2.setpoint = settings.value("fb2_setpoint").toReal();
-    laser2.maxerr = settings.value("fb2_maxerr").toReal();
-    laser2.fb_min = settings.value("fb2_min").toReal();
-    laser2.fb_max = settings.value("fb2_max").toReal();
-    laser2.fb_pending = settings.value("fb2_pending").toReal();
-    settings.endGroup();
+    for (i = 0; i < laser_num; ++i) {
+        settings.beginGroup(QString("laser%1").arg(i));
+        lasers.append( (LaserCtrl){settings.value("ao_enable").toBool(),
+            settings.value("name").toString(),
+            settings.value("wm_channel").toUInt(),
+            settings.value("ao_device").toString(),
+            settings.value("ao_decimals").toUInt(),
+            settings.value("ao_stepsize").toReal(),
+            settings.value("ao_min").toReal(),
+            settings.value("ao_max").toReal(),
+            settings.value("ao_value").toReal(),
+            settings.value("fb_p").toReal(),
+            settings.value("fb_i").toReal(),
+            settings.value("fb_setpoint").toReal(),
+            settings.value("fb_maxerr").toReal(),
+            settings.value("fb_min").toReal(),
+            settings.value("fb_max").toReal(),
+            settings.value("fb_pending").toUInt(),
+            settings.value("plot_range").toReal()}  );
+        channels_lasers.insert(settings.value("wm_channel").toUInt(),i);
+        settings.endGroup();
+    }
+    qDebug() << channels_lasers;
+    channels = channels_lasers.uniqueKeys();
 
     settings.beginGroup("shutters");
     AUTO_CONFIG(arduino_port,String);
@@ -188,40 +191,34 @@ void MainWindow::writeConfig()
     QSettings settings(config_dir, QSettings::IniFormat);
 
     settings.beginGroup("wavemeter");
-    AUTO_SAVE_CONFIG(wm_channel);
     AUTO_SAVE_CONFIG(wm_channel_min);
     AUTO_SAVE_CONFIG(wm_channel_max);
     AUTO_SAVE_CONFIG(udp_port);
     settings.endGroup();
 
     settings.beginGroup("chart");
-    AUTO_SAVE_CONFIG(chart_x_min);
-    AUTO_SAVE_CONFIG(chart_x_max);
-    AUTO_SAVE_CONFIG(chart_x_tick_counts);
-    AUTO_SAVE_CONFIG(chart_y_min);
-    AUTO_SAVE_CONFIG(chart_y_max);
+    AUTO_SAVE_CONFIG(pattern_x_min);
+    AUTO_SAVE_CONFIG(pattern_x_max);
+    AUTO_SAVE_CONFIG(pattern_x_tick_counts);
+    AUTO_SAVE_CONFIG(pattern_y_min);
+    AUTO_SAVE_CONFIG(pattern_y_max);
+    AUTO_SAVE_CONFIG(freqplot_x_length);
     settings.endGroup();
 
     settings.beginGroup("font");
-    AUTO_SAVE_CONFIG(title_font_family);
-    AUTO_SAVE_CONFIG(title_font_size);
+    AUTO_SAVE_CONFIG(pattern_title_font_family);
+    AUTO_SAVE_CONFIG(pattern_title_font_size);
     settings.endGroup();
 
-    settings.beginGroup("laser1");
-    settings.setValue("ao1_value",laser1.value);
-    settings.setValue("fb1_p",laser1.p);
-    settings.setValue("fb1_i",laser1.i);
-    settings.setValue("fb1_setpoint",laser1.setpoint);
-    settings.setValue("fb1_maxerr",laser1.maxerr);
-    settings.endGroup();
-
-    settings.beginGroup("laser2");
-    settings.setValue("ao2_value",laser2.value);
-    settings.setValue("fb2_p",laser2.p);
-    settings.setValue("fb2_i",laser2.i);
-    settings.setValue("fb2_setpoint",laser2.setpoint);
-    settings.setValue("fb2_maxerr",laser2.maxerr);
-    settings.endGroup();
+    for (i = 0; i < lasers.size(); ++i) {
+        settings.beginGroup(QString("laser%1").arg(i));
+        settings.setValue("ao_value",lasers[i].value);
+        settings.setValue("fb_p",lasers[i].p);
+        settings.setValue("fb_i",lasers[i].i);
+        settings.setValue("fb_setpoint",lasers[i].setpoint);
+        settings.setValue("fb_maxerr",lasers[i].maxerr);
+        settings.endGroup();
+    }
 
     statusBar()->showMessage(QString("Loaded config.ini"));
 }

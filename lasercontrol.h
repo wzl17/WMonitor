@@ -6,14 +6,12 @@
 #include <stdio.h>
 #include <NIDAQmx.h>
 
-
 class LaserControl : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit LaserControl(LaserCtrl *laser,
-                          QWidget *parent = nullptr);
+    LaserControl(LaserCtrl *laser, QWidget *parent = nullptr);
     ~LaserControl();
 
     QGroupBox *groupWidget;
@@ -50,7 +48,7 @@ private:
 
     QFormLayout *controlBoxGrid;
 
-    qint32 feedback_counter;
+    quint32 feedback_counter;
     qreal err_sum;
     qreal offset;
 
@@ -69,8 +67,10 @@ public slots:
     void changeSetP();
     /// @brief Change max error
     void changeMaxErr();
+    /// @brief Change analog output voltage
+    void changeOffset();
     /// @brief Feedback;
-    void voltFeedback(const qreal &freq);
+    void voltFeedback();
 };
 
 #endif // LASERCONTROL_H
