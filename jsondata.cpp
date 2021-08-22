@@ -2,36 +2,27 @@
 
 #include <QJsonDocument>
 
-JsonData::JsonData(const qint16 &channel)
-    : pattern({})
-    , freq(-1)
-    , ch(channel-1)
+JsonData::JsonData()
+    : wm_pattern({})
 {
-
+    wm_pattern.reserve(pattern_x_max+1);
 }
 
 JsonData::~JsonData()
 {
 }
 
-void JsonData::setData(const QByteArray &data)
+void JsonData::loadWavemeterData(const QByteArray &data)
 {
-    if (ch<0) {
-        qDebug() << "Invalid channel number!";
-        return;
-    }
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
-    QJsonArray tempArray = doc[ch]["PatternData"].toArray();
+    QJsonArray tempArray = doc[pattern_channel-1]["PatternData"].toArray();
     for ( qint32 i = 0; i < tempArray.size(); i++ ) {
-        pattern.append( QPointF( i, tempArray[i].toDouble() ) );
+        wm_pattern.append( QPointF( i, tempArray[i].toDouble() ) );
     }
-    freq = doc[ch]["Frequency"].toDouble();
+    for (qint16 i = 0; i < channels.size(); ++i) { // update the freq of all listed channels
+        m_ch = qBound(wm_channel_min, channels[i], wm_channel_max);
+        channels_freqs[m_ch] = doc[m_ch-1]["Frequency"].toDouble();
+    }
 }
 
-bool JsonData::isNull()
-{
-    if (pattern.isEmpty())
-        return true;
-    else return false;
-}

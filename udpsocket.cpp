@@ -3,69 +3,59 @@
 UdpSocket::UdpSocket(QObject *parent)
     : QUdpSocket(parent)
 {
+    initConfigBox();
+    initSocket();
 }
 
 UdpSocket::~UdpSocket()
 {
-    delete buttons;
     delete channelBox;
-    delete portBox;
     delete channelLabel;
-    delete portLabel;
-    delete configForm;
-    delete configBoxGroup;
+    delete channelForm;
+    delete channelWidget;
+    delete buttons;
+    delete groupLayout;
+    delete groupWidget;
 }
 
 void UdpSocket::initSocket()
 {
-    this->bind(UDP_PORT,QUdpSocket::ShareAddress);
+    this->bind(udp_port,QUdpSocket::ShareAddress);
     this->open(QIODevice::ReadOnly);
-
-    buttons = new UdpButtons(tr("UDP Connection"));
-    QObject::connect(buttons->startButton, &QPushButton::clicked,
-                     this, &UdpSocket::startUDP);
-    QObject::connect(buttons->stopButton, &QPushButton::clicked,
-                     this, &UdpSocket::stopUDP);
 }
 
 void UdpSocket::initConfigBox()
 {
-    configBoxGroup = new QGroupBox(tr("Config"));
+    groupWidget = new QGroupBox(tr("UDP connection"));
 
-    channelLabel = new QLabel(tr("WM Channel:"));
+    channelLabel = new QLabel(tr("Pattern Channel:"));
     channelBox = new QSpinBox;
     channelBox->setRange(1,9);
     channelBox->setSingleStep(1);
     QObject::connect(channelBox, QOverload<int>::of(&QSpinBox::valueChanged),
                      this, &UdpSocket::switchChannel);
-    channelBox->setValue(1);
+    channelBox->setValue(pattern_channel);
+    channelForm = new QFormLayout;
+    channelForm->addRow(channelLabel,channelBox);
+    channelWidget = new QWidget;
+    channelWidget->setLayout(channelForm);
 
-    portLabel = new QLabel(tr("UDP Port:"));
-    portBox = new QLineEdit;
-    portBox->setText("9898");
-    QObject::connect(portBox, &QLineEdit::editingFinished,
-                     this, &UdpSocket::switchPort);
+    buttons = new StartStopButtons(tr(""));
+    QObject::connect(buttons->startButton, &QPushButton::clicked,
+                     this, &UdpSocket::startUDP);
+    QObject::connect(buttons->stopButton, &QPushButton::clicked,
+                     this, &UdpSocket::stopUDP);
 
-    configForm = new QFormLayout;
-    configForm->addRow(channelLabel,channelBox);
-    configForm->addRow(portLabel,portBox);
-    configBoxGroup->setLayout(configForm);
+    groupLayout = new QVBoxLayout;
+    groupLayout->addWidget(channelWidget);
+    groupLayout->addWidget(buttons);
+    groupWidget->setLayout(groupLayout);
+
 }
 
 void UdpSocket::switchChannel(qint16 newchannel)
 {
-    WM_CHANNEL = newchannel;
-}
-
-void UdpSocket::switchPort()
-{
-    UDP_PORT = portBox->text().toInt();
-    if (this->isOpen()) {
-        this->close();
-        this->open(QIODevice::ReadOnly);
-    }
-    this->bind(UDP_PORT,QUdpSocket::ShareAddress);
-    qDebug() << UDP_PORT;
+    pattern_channel = newchannel;
 }
 
 void UdpSocket::startUDP()
@@ -73,7 +63,8 @@ void UdpSocket::startUDP()
     if (!this->isOpen()) {
         this->open(QIODevice::ReadOnly);
         qDebug() << "UDP Started.";
-        this->bind(UDP_PORT,QUdpSocket::ShareAddress);
+        emit status("UDP Started.");
+        this->bind(udp_port,QUdpSocket::ShareAddress);
     }
 }
 
@@ -81,6 +72,7 @@ void UdpSocket::stopUDP()
 {
     if (this->isOpen()) {
         qDebug() << "UDP Stopped.";
+        emit status("UDP Stopped.");
         this->close();
     }
 }
