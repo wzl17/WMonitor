@@ -1,62 +1,28 @@
 #include "jsondata.h"
 
-#include <QTextStream>
-#include <QIODevice>
 #include <QJsonDocument>
 
 JsonData::JsonData()
-    : pattern({})
-    , freq(-1)
+    : wm_pattern({})
 {
-
+    wm_pattern.reserve(pattern_x_max+1);
 }
 
 JsonData::~JsonData()
 {
-
 }
 
-void JsonData::setData(const QByteArray &data)
+void JsonData::loadWavemeterData(const QByteArray &data)
 {
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
-    QJsonArray tempArray = doc[6]["PatternData"].toArray();
+    QJsonArray tempArray = doc[pattern_channel-1]["PatternData"].toArray();
     for ( qint32 i = 0; i < tempArray.size(); i++ ) {
-        pattern.append( QPointF( i, tempArray[i].toDouble() ) );
+        wm_pattern.append( QPointF( i, tempArray[i].toDouble() ) );
     }
-    qDebug() << pattern.size();
-    freq = doc[6]["Frequency"].toDouble();
+    for (qint16 i = 0; i < channels.size(); ++i) { // update the freq of all listed channels
+        m_ch = qBound(wm_channel_min, channels[i], wm_channel_max);
+        channels_freqs[m_ch] = doc[m_ch-1]["Frequency"].toDouble();
+    }
 }
 
-bool JsonData::isNull()
-{
-    if (pattern.isEmpty())
-        return true;
-    else return false;
-}
-
-//void JsonData::processJson()
-//{
-///// test by reading from file
-//    QFile file("D:/Onedrive/Codes/Qt_projects/WavelengthMonitor/udp_log_0.json");
-//    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-//            return;
-
-//    QTextStream in(&file);
-//    while (!in.atEnd()) {
-//        data = in.readLine();
-//    }
-//    QJsonDocument doc = QJsonDocument::fromJson(data);
-
-//    tempArray = doc[6]["PatternData"].toArray();
-//    for ( qint32 i = 0; i < tempArray.size(); i++ ) {
-//        pattern.append( QPointF( i, tempArray[i].toDouble() ) );
-//    }
-
-//    freq = doc[6]["Frequency"].toDouble();
-///// TODO:
-////    if (!doc.isObject()) {
-////        // handle parse error...
-////    }
-
-//}

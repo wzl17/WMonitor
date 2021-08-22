@@ -1,35 +1,27 @@
 #ifndef JSONDATA_H
 #define JSONDATA_H
 
-#include <QFile>
-#include <QString>
+#include "globals.h"
 #include <QJsonArray>
-#include <QtCharts/QLineSeries>
+#include <QList>
+#include <QPointF>
 #include <QByteArray>
-
-QT_CHARTS_USE_NAMESPACE
 
 class JsonData
 {
 
 public:
     JsonData();
-    ~JsonData();
+    virtual ~JsonData();
 
-    /// @brief pattern data
-    QList<QPointF> pattern;
-    /// @brief frequency value read from channel 7
-    qreal freq;
-    // TODO:
-    // make freq a list
+    /// @brief wavemeter pattern data
+    QList<QPointF> wm_pattern;
 
     /// @brief json string data input
-    void setData(const QByteArray &data);
-    /// @brief whether data is loaded or not
-    bool isNull(void);
+    void loadWavemeterData(const QByteArray &data);
 
 private:
-    // void processJson();
+    qint16 m_ch;
 };
 
 #endif // JSONDATA_H
